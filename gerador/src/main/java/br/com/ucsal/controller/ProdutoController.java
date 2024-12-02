@@ -1,52 +1,61 @@
 package br.com.ucsal.controller;
 
+import java.io.IOException;
+
+import java.util.Map;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-@WebServlet(urlPatterns = {"/view/*", "/"})
+@WebServlet(urlPatterns = {"/view/*", "/"}) // Mapeamento para capturar qualquer caminho dentro de "/view"
 public class ProdutoController extends HttpServlet {
 
-    private static final long serialVersionUID = 1L; // Adicionado serialVersionUID
-    private static final Logger logger = Logger.getLogger(ProdutoController.class.getName());
+    private static final long serialVersionUID = 1L;
     private Map<String, Command> commands;
 
-    @Override
-    @SuppressWarnings("unchecked") // Para suprimir o aviso de cast não verificado
+    @SuppressWarnings("unchecked")
+	@Override
     public void init() throws ServletException {
-        Object commandObject = getServletContext().getAttribute("commands");
-        if (commandObject instanceof Map) {
-            this.commands = (Map<String, Command>) commandObject;
-        } else {
-            throw new ServletException("Mapa de comandos inválido ou não encontrado no contexto.");
+        this.commands = (Map<String, Command>) getServletContext().getAttribute("commands");
+        if (this.commands == null) {
+            System.out.println("Mapa de comandos não encontrado no contexto.");
         }
     }
 
     @Override
     protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String path = request.getPathInfo();
+        // Pega o caminho completo da requisição (ex: /seu-app/view/adicionarProdutos)
+        String requestURI = request.getRequestURI();
+        
+        // Pega o contexto da aplicação (ex: /seu-app)
+        String contextPath = request.getContextPath();
+
+        // Remove o contexto da URL para obter apenas o caminho da requisição após o contexto
+        String path = requestURI.substring(contextPath.length());
+        
+        // Se o caminho estiver vazio ou for apenas "/"
         if (path == null || path.equals("/")) {
-            path = "/listarProdutos"; // Rota padrão
+            path = "/listarProdutos"; // Redireciona para a página de listagem
         }
 
+        System.out.println("Caminho solicitado: " + path);
+
+        //verifica e executa o comando com base no caminho
+        @SuppressWarnings("unchecked")
+		Map<String, Command> commands = (Map<String, Command>) request.getServletContext().getAttribute("commands");
+
         Command command = commands.get(path);
+
         if (command != null) {
-            try {
-                command.execute(request, response);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Erro ao executar comando", e);
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erro ao processar a requisição.");
-            }
+            command.execute(request, response);
         } else {
-            logger.warning("Rota não encontrada: " + path);
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Página não encontrada.");
+            System.out.println("Comando não encontrado para o caminho: " + path);
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Página não encontrada");
         }
     }
+
+
 }
+

@@ -4,50 +4,57 @@ import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
 import org.reflections.Reflections;
+
 import br.com.ucsal.anotacoes.Rota;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @WebListener
 public class InicializadorListener implements ServletContextListener {
 
-    private static final Logger logger = Logger.getLogger(InicializadorListener.class.getName());
-    private final Map<String, Command> commands = new HashMap<>();
+    private Map<String, Command> commands = new HashMap<>();
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
-        logger.info("Inicializando rotas...");
+        System.out.println("Inicializando rotas...");
+
         try {
             Reflections reflections = new Reflections("br.com.ucsal.controller");
             Set<Class<?>> classesAnotadas = reflections.getTypesAnnotatedWith(Rota.class);
 
-            for (Class<?> clazz : classesAnotadas) {
-                Rota rota = clazz.getAnnotation(Rota.class);
-                if (commands.containsKey(rota.value())) {
-                    throw new IllegalArgumentException("Conflito de rotas: '" + rota.value() + "' já registrada.");
-                }
-                if (!Command.class.isAssignableFrom(clazz)) {
-                    throw new IllegalArgumentException(clazz.getName() + " não implementa Command.");
-                }
-                Command commandInstance = (Command) clazz.getDeclaredConstructor().newInstance();
-                commands.put(rota.value(), commandInstance);
-                logger.info("Rota registrada: " + rota.value() + " -> " + clazz.getName());
+            if (classesAnotadas.isEmpty()) {
+                System.out.println("Nenhuma classe anotada com @Rota foi encontrada.");
             }
 
+            for (Class<?> classe : classesAnotadas) {
+                System.out.println("Classe anotada encontrada: " + classe.getName());
+                Rota rota = classe.getAnnotation(Rota.class);
+
+                if (!Command.class.isAssignableFrom(classe)) {
+                    throw new IllegalArgumentException("A classe " + classe.getName() + " não implementa Command.");
+                }
+
+                Command commandInstance = (Command) classe.getDeclaredConstructor().newInstance();
+                commands.put(rota.value(), commandInstance);
+                System.out.println("Rota registrada: " + rota.value() + " -> " + classe.getName());
+            }
+
+            // Armazena o mapa de comandos no contexto da aplicação
             sce.getServletContext().setAttribute("commands", commands);
-            logger.info("Rotas registradas com sucesso.");
+            System.out.println("Rotas registradas com sucesso!");
+
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Erro ao inicializar rotas", e);
+            e.printStackTrace();
+            throw new RuntimeException("Erro ao inicializar rotas: " + e.getMessage(), e);
         }
     }
+
 
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
         commands.clear();
-        logger.info("Rotas limpas.");
+        System.out.println("Aplicação encerrada. Rotas limpas.");
     }
 }

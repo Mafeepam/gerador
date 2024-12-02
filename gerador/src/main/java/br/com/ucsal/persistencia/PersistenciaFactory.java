@@ -1,17 +1,22 @@
 package br.com.ucsal.persistencia;
 
-import br.com.ucsal.model.Produto;
+import br.com.ucsal.util.InstanciaUnica;
 
 public class PersistenciaFactory {
 
-    public static ProdutoRepository<Produto, Integer> getProdutoRepository(int tipo) {
-        switch (tipo) {
-            case 0: // HSQLDB
+    public static final int MEMORIA = 0;
+    public static final int HSQL = 1;
+
+    public static ProdutoRepository<?, ?> getProdutoRepository(int type) {
+        switch (type) {
+            case MEMORIA:
+            	System.out.println("Fábrica: Criando repositório em memória.");
+                return InstanciaUnica.carregarSingleton(MemoriaProdutoRepository.class);
+            case HSQL:
+            	System.out.println("Fábrica: Criando repositório HSQLDB.");
                 return new HSQLProdutoRepository();
-            case 1: // Memória
-                return MemoriaProdutoRepository.getInstancia();
             default:
-                throw new IllegalArgumentException("Tipo de repositório desconhecido: " + tipo);
+                throw new IllegalArgumentException("Unexpected value: " + type);
         }
     }
 }

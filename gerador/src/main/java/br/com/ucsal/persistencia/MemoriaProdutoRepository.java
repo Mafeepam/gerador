@@ -1,46 +1,52 @@
 package br.com.ucsal.persistencia;
 
-import br.com.ucsal.anotacoes.Singleton;
-import br.com.ucsal.model.Produto;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
+import br.com.ucsal.anotacoes.Singleton;
+import br.com.ucsal.model.Produto;
 
 @Singleton
-public class MemoriaProdutoRepository implements ProdutoRepository<Produto, Integer> {
+public class MemoriaProdutoRepository implements ProdutoRepository<Produto, Integer>{
 
-    private static final Logger logger = Logger.getLogger(MemoriaProdutoRepository.class.getName());
+    private Map<Integer, Produto> produtos = new HashMap<>();
+    private AtomicInteger currentId = new AtomicInteger(1);
 
-    private final Map<Integer, Produto> produtos = new HashMap<>();
-    private final AtomicInteger currentId = new AtomicInteger(1);
+
     private static MemoriaProdutoRepository instancia;
-
-    private MemoriaProdutoRepository() {}
-
+    
+    private MemoriaProdutoRepository() {
+    }
+    
+    
     public static synchronized MemoriaProdutoRepository getInstancia() {
         if (instancia == null) {
             instancia = new MemoriaProdutoRepository();
+            System.out.println("Singleton: Criando nova instância de MemoriaProdutoRepository.");
+        } else {
+            System.out.println("Singleton: Retornando instância existente de MemoriaProdutoRepository.");
         }
         return instancia;
     }
-
+    
     @Override
     public void adicionar(Produto entidade) {
         int id = currentId.getAndIncrement();
         entidade.setId(id);
-        produtos.put(id, entidade);
-        logger.info("Produto adicionado: " + entidade);
+        produtos.put(entidade.getId(), entidade);
     }
+    
+    @Override
+    public void atualizar(Produto entidade) {
+        produtos.put(entidade.getId(), entidade);
+    }
+
 
     @Override
     public void remover(Integer id) {
-        if (produtos.remove(id) != null) {
-            logger.info("Produto removido com ID: " + id);
-        }
+        produtos.remove(id);
     }
 
     @Override
@@ -49,14 +55,9 @@ public class MemoriaProdutoRepository implements ProdutoRepository<Produto, Inte
     }
 
     @Override
-    public void atualizar(Produto entidade) {
-        if (produtos.containsKey(entidade.getId())) {
-            produtos.put(entidade.getId(), entidade);
-        }
-    }
-
-    @Override
     public Produto obterPorID(Integer id) {
         return produtos.get(id);
     }
+
+
 }

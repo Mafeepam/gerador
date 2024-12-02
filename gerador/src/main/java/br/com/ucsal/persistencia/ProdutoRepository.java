@@ -2,10 +2,18 @@ package br.com.ucsal.persistencia;
 
 import java.util.List;
 
-public interface ProdutoRepository<T, ID> {
+import br.com.ucsal.model.Produto;
+
+public interface ProdutoRepository<T,I> {
+	
     void adicionar(T entidade);
-    void remover(ID id);
-    List<T> listar();
+    
+    void remover(I id);
+    
     void atualizar(T entidade);
-    T obterPorID(ID id);
+    
+    List<T> listar();
+    
+    Produto obterPorID(I id);
+
 }
