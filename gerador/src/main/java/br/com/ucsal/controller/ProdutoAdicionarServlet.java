@@ -2,8 +2,8 @@ package br.com.ucsal.controller;
 
 import br.com.ucsal.anotacoes.Inject;
 import br.com.ucsal.anotacoes.Rota;
-import br.com.ucsal.logicaAnotacoes.Injector;
 import br.com.ucsal.service.ProdutoService;
+import br.com.ucsal.util.Injector;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
